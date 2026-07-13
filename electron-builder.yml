@@ -19,3 +19,4 @@ publish:
   provider: github
   owner: Tall-Paul
   repo: hearth
+  releaseType: release
