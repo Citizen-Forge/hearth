@@ -33,8 +33,13 @@ Build / package:
 
 ```bash
 npm run build    # bundles main, preload, renderer into ./out
-npm run dist      # build + electron-builder installer (configure targets first)
+npm run dist      # build + electron-builder NSIS installer
 ```
+
+> **Note:** `npm run dist` needs Windows Developer Mode enabled (or an elevated shell) —
+> electron-builder unpacks a macOS codesign helper archive that contains symlinks, and
+> Windows blocks symlink creation for standard, non-elevated users otherwise. Real releases
+> are built by CI (see **Releases & auto-update** below), which doesn't hit this.
 
 ### Dev on a desktop (not the TV)
 
@@ -53,8 +58,12 @@ Everything is editable in-app under **Admin** (gear icon), stored at
   version/path. If missing, **Install mpv** runs `winget install shinchiro.mpv` for you (a UAC
   prompt may appear), **Re-check** re-detects, and **Get mpv manually** opens mpv.io. A detected
   path is saved automatically so playback just works.
-- **Media folders** — one per line, e.g. `Z:\Movies`, `Z:\TV`. The scanner walks these,
-  parses movie/episode titles, and populates the Library + "Recently added".
+- **Media folders** — add each shared-drive folder and tag it **Films** or **TV**; the scanner
+  never has to guess. Films: one subfolder per movie (or loose files), Radarr-style. TV: a
+  folder per show, a subfolder per season (`Season 01`, …), episodes inside, Sonarr-style.
+  The Library screen shows Films and TV as separate rows; shows open into a season/episode
+  browser. Poster art is matched automatically from Sonarr/Radarr's own library (by folder
+  name) when they're configured below — no extra API key needed.
 - **Sonarr / Radarr** — base URL + API key (find the key in each app's *Settings → General*).
   Use **Test** to verify. Discover search hits both; pressing OK on a result adds it
   (uses the first root folder + quality profile on that service).
@@ -85,8 +94,8 @@ src/
     ipc.ts               # all IPC handlers
     config.ts            # zod-validated config store + default apps
     services/
-      arr.ts             # Sonarr/Radarr v3 client (search + add)
-      library.ts         # shared-drive scanner + title parsing
+      arr.ts             # Sonarr/Radarr v3 client (search + add + poster matching)
+      library.ts         # shared-drive scanner (Films/TV, season/episode grouping)
       mpv.ts             # mpv launch + JSON-IPC control
       apps.ts            # launch exe / UWP / URL
       system.ts          # mpv detection + winget install
@@ -100,10 +109,28 @@ src/
     screens/             # Home, Apps, Library, Discover, Settings
 ```
 
+## Releases & auto-update
+
+Pushing a tag matching `v*.*.*` (e.g. `v0.2.0`) triggers
+[`.github/workflows/release.yml`](.github/workflows/release.yml), which builds the NSIS
+installer on a `windows-latest` runner and publishes it to
+[GitHub Releases](https://github.com/Tall-Paul/hearth/releases) via `electron-builder --publish always`.
+
+The running app checks that same Releases feed on startup and every 4 hours
+(`electron-updater`, wired in `src/main/index.ts`), downloads newer versions in the
+background, and installs them on the next restart — no manual redistribution needed.
+To cut a release:
+
+```bash
+git tag v0.2.0
+git push origin v0.2.0
+```
+
+Bump the `version` in `package.json` to match before tagging.
+
 ## Roadmap / ideas
 
 - Embed the mpv surface directly in the window via `--wid` (currently a controlled child window)
-- Poster art for local media (TMDB) and richer Library grouping (per-show pages)
 - "Continue watching" with resume positions
 - Per-app kiosk browser (Edge `--kiosk`) instead of default browser for streaming
 - Optional pairing/PIN on the phone remote
