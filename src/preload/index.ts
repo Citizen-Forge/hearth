@@ -31,6 +31,7 @@ const api = {
 
   // Apps
   launchApp: (app: AppShortcut): Promise<ApiResult<null>> => ipcRenderer.invoke('apps:launch', app),
+  closeEmbed: (): Promise<void> => ipcRenderer.invoke('embed:close'),
 
   // Playback
   playFile: (path: string, title?: string): Promise<ApiResult<null>> =>

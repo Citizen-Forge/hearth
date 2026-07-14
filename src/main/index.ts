@@ -1,4 +1,4 @@
-import { app, BrowserWindow, shell } from 'electron'
+import { app, BrowserWindow, shell, components } from 'electron'
 import { autoUpdater } from 'electron-updater'
 import { join } from 'path'
 import { loadConfig } from './config'
@@ -120,6 +120,13 @@ app.whenReady().then(() => {
   blog('app ready')
   createWindow()
   setupAutoUpdater()
+
+  // Experimental (widevine-embed branch): triggers the Widevine CDM download/install
+  // on first run. Non-blocking — embedded DRM tiles just won't play until this resolves.
+  components
+    .whenReady([components.WIDEVINE_CDM_ID])
+    .then((result) => blog('widevine components ready', JSON.stringify(result)))
+    .catch((err) => blog('widevine components.whenReady FAILED', err instanceof Error ? err.message : String(err)))
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

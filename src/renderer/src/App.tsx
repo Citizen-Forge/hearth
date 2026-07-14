@@ -88,6 +88,7 @@ export function App() {
   }, [])
 
   const goBack = useCallback(() => {
+    void window.api.closeEmbed()
     if (screen !== 'home') {
       setScreen('home')
       setTimeout(() => setFocus('nav-home'), 60)
@@ -103,7 +104,11 @@ export function App() {
         case 'nav': pressKey(cmd.dir); break
         case 'enter': pressKey('enter'); break
         case 'back': goBack(); break
-        case 'home': setScreen('home'); setTimeout(() => setFocus('nav-home'), 60); break
+        case 'home':
+          void window.api.closeEmbed()
+          setScreen('home')
+          setTimeout(() => setFocus('nav-home'), 60)
+          break
         case 'playpause': playCommand('playpause'); break
         case 'seek': playCommand('seek', cmd.delta); break
         case 'volume': playCommand('volume', cmd.delta); break

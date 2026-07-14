@@ -12,6 +12,7 @@ import { sonarrSearch, radarrSearch, sonarrAdd, radarrAdd, arrPing, buildPosterM
 import { scanLibrary, normalizeFolderName } from './services/library'
 import { mpv } from './services/mpv'
 import { launchApp } from './services/apps'
+import { openEmbeddedPlayer, closeEmbeddedPlayer } from './services/embed'
 import { startRemoteServer, remoteUrl } from './services/remote-server'
 import { checkMpv, installMpv } from './services/system'
 import type { MpvStatus, InstallResult } from '../shared/types'
@@ -110,12 +111,18 @@ export function registerIpc(win: BrowserWindow): void {
   // ---- Apps ----
   ipcMain.handle('apps:launch', async (_e, app: AppShortcut): Promise<ApiResult<null>> => {
     try {
+      if (app.kind === 'embed') {
+        openEmbeddedPlayer(win, app.target)
+        return ok(null)
+      }
       await launchApp(app)
       return ok(null)
     } catch (err) {
       return fail(err)
     }
   })
+
+  ipcMain.handle('embed:close', (): void => closeEmbeddedPlayer(win))
 
   // ---- Playback (mpv) ----
   ipcMain.handle('play:file', async (_e, path: string, title?: string): Promise<ApiResult<null>> => {

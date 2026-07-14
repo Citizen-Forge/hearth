@@ -19,7 +19,7 @@ const appShortcutSchema = z.object({
   name: z.string(),
   icon: z.string().optional(),
   target: z.string(),
-  kind: z.enum(['exe', 'uwp', 'webapp', 'url']),
+  kind: z.enum(['exe', 'uwp', 'webapp', 'url', 'embed']),
   color: z.string().optional(),
   enabled: z.boolean().default(true)
 })
@@ -35,12 +35,14 @@ const configSchema = z.object({
 })
 
 const DEFAULT_APPS: HearthConfig['apps'] = [
-  { id: 'netflix', name: 'Netflix', icon: '🎬', kind: 'uwp', target: '4DF9E0F8.Netflix_mcm4njqhnhss8!Netflix.App', color: '#e50914' },
-  { id: 'prime', name: 'Prime Video', icon: '📺', kind: 'uwp', target: 'AmazonVideo.PrimeVideo_pwbj9vvecjh7j!PWA', color: '#00a8e1' },
+  // EXPERIMENTAL (widevine-embed branch): these three load inside Hearth's own window
+  // instead of launching the native Store app, to test truly chrome-free DRM playback.
+  { id: 'netflix', name: 'Netflix', icon: '🎬', kind: 'embed', target: 'https://www.netflix.com', color: '#e50914' },
+  { id: 'prime', name: 'Prime Video', icon: '📺', kind: 'embed', target: 'https://www.primevideo.com', color: '#00a8e1' },
   { id: 'geforce', name: 'GeForce Now', icon: '🎮', kind: 'webapp', target: 'https://play.geforcenow.com', color: '#76b900' },
   { id: 'minecraft-bedrock', name: 'Minecraft', icon: '⛏️', kind: 'uwp', target: 'Microsoft.MinecraftUWP_8wekyb3d8bbwe!Game', color: '#6cbb3c' },
   { id: 'youtube', name: 'YouTube', icon: '▶️', kind: 'webapp', target: 'https://www.youtube.com/tv', color: '#ff0000' },
-  { id: 'disney', name: 'Disney+', icon: '🏰', kind: 'uwp', target: 'Disney.37853FC22B2CE_6rarf9sa4v8jt!App', color: '#113ccf' },
+  { id: 'disney', name: 'Disney+', icon: '🏰', kind: 'embed', target: 'https://www.disneyplus.com', color: '#113ccf' },
   { id: 'spotify', name: 'Spotify', icon: '🎵', kind: 'webapp', target: 'https://open.spotify.com', color: '#1db954' },
   // BBC iPlayer and All4 are UK-region-locked Store listings we couldn't verify an
   // AppUserModelID for from this machine, so these use the chromeless-web fallback instead.

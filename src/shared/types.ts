@@ -13,8 +13,10 @@ export interface AppShortcut {
    * - uwp: launch a Store app by AppUserModelID
    * - webapp: open a URL in Edge's chromeless fullscreen app mode (DRM works)
    * - url: open a URL in the default browser
+   * - embed: load a URL directly inside Hearth's own window (experimental,
+   *   requires a Widevine-enabled Electron build) — truly chrome-free
    */
-  kind: 'exe' | 'uwp' | 'webapp' | 'url'
+  kind: 'exe' | 'uwp' | 'webapp' | 'url' | 'embed'
   /** Optional accent colour for the tile. */
   color?: string
   /** Whether the tile is shown on Home/Apps. Defaults to true. */
