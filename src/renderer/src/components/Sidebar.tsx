@@ -4,7 +4,8 @@ import type { ScreenId } from '../types'
 const ITEMS: { id: ScreenId; icon: string; label: string }[] = [
   { id: 'home', icon: '🏠', label: 'Home' },
   { id: 'apps', icon: '🚀', label: 'Apps' },
-  { id: 'library', icon: '🎞️', label: 'Library' },
+  { id: 'films', icon: '🎬', label: 'Films' },
+  { id: 'tv', icon: '📺', label: 'TV' },
   { id: 'discover', icon: '🔍', label: 'Discover' },
   { id: 'settings', icon: '⚙️', label: 'Admin' }
 ]

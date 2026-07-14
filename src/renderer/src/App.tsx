@@ -4,7 +4,8 @@ import { Sidebar } from './components/Sidebar'
 import { PlaybackBar } from './components/PlaybackBar'
 import { HomeScreen } from './screens/HomeScreen'
 import { AppsScreen } from './screens/AppsScreen'
-import { LibraryScreen } from './screens/LibraryScreen'
+import { FilmsScreen } from './screens/FilmsScreen'
+import { TVScreen } from './screens/TVScreen'
 import { DiscoverScreen } from './screens/DiscoverScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { useGamepad } from './navigation/useGamepad'
@@ -19,7 +20,7 @@ export function App() {
   const [config, setConfig] = useState<HearthConfig | null>(null)
   const [screen, setScreen] = useState<ScreenId>(() => {
     const hash = window.location.hash.replace('#', '')
-    const valid: ScreenId[] = ['home', 'apps', 'library', 'discover', 'settings']
+    const valid: ScreenId[] = ['home', 'apps', 'films', 'tv', 'discover', 'settings']
     return (valid as string[]).includes(hash) ? (hash as ScreenId) : 'home'
   })
   const [library, setLibrary] = useState<Library>(EMPTY_LIBRARY)
@@ -164,8 +165,11 @@ export function App() {
           <HomeScreen apps={enabledApps} library={library} onLaunch={launchApp} onPlay={playFile} onNavigate={navigate} />
         )}
         {screen === 'apps' && <AppsScreen apps={enabledApps} onLaunch={launchApp} />}
-        {screen === 'library' && (
-          <LibraryScreen library={library} loading={libLoading} error={libError} onPlay={playFile} onRefresh={scan} />
+        {screen === 'films' && (
+          <FilmsScreen movies={library.movies} loading={libLoading} error={libError} onPlay={playFile} onRefresh={scan} />
+        )}
+        {screen === 'tv' && (
+          <TVScreen shows={library.shows} loading={libLoading} error={libError} onPlay={playFile} onRefresh={scan} />
         )}
         {screen === 'discover' && (
           <DiscoverScreen

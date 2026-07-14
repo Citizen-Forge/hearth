@@ -1,4 +1,4 @@
-export type ScreenId = 'home' | 'apps' | 'library' | 'discover' | 'settings'
+export type ScreenId = 'home' | 'apps' | 'films' | 'tv' | 'discover' | 'settings'
 
 export type {
   HearthConfig,
@@ -18,7 +18,7 @@ export type {
   InstallResult
 } from '../../shared/types'
 
-import type { Library } from '../../shared/types'
+import type { Library, Episode } from '../../shared/types'
 
 /** A single playable poster tile — used for Home's "Recently added" row. */
 export interface RecentTile {
@@ -41,19 +41,29 @@ export function recentFromLibrary(library: Library, limit = 12): RecentTile[] {
     path: m.path,
     addedAt: m.addedAt ?? 0
   }))
-  const episodeTiles: RecentTile[] = library.shows.flatMap((s) =>
-    s.seasons.flatMap((season) =>
-      season.episodes.map((ep) => ({
-        id: ep.id,
+  // Only the latest episode per show, so one binge-watched show doesn't crowd out everything else.
+  const episodeTiles: RecentTile[] = library.shows.flatMap((s) => {
+    let latest: { season: number; episode: Episode } | null = null
+    for (const season of s.seasons) {
+      for (const ep of season.episodes) {
+        if (!latest || (ep.addedAt ?? 0) > (latest.episode.addedAt ?? 0)) {
+          latest = { season: season.season, episode: ep }
+        }
+      }
+    }
+    if (!latest) return []
+    return [
+      {
+        id: latest.episode.id,
         title: s.title,
-        subtitle: `S${season.season}E${ep.episode} · ${ep.title}`,
+        subtitle: `S${latest.season}E${latest.episode.episode} · ${latest.episode.title}`,
         posterUrl: s.posterUrl,
         icon: '📺',
-        path: ep.path,
-        addedAt: ep.addedAt ?? 0
-      }))
-    )
-  )
+        path: latest.episode.path,
+        addedAt: latest.episode.addedAt ?? 0
+      }
+    ]
+  })
   return [...movieTiles, ...episodeTiles].sort((a, b) => b.addedAt - a.addedAt).slice(0, limit)
 }
 
