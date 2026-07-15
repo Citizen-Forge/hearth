@@ -10,6 +10,9 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: write
+    env:
+      EVS_ACCOUNT_NAME: ${{ secrets.EVS_ACCOUNT_NAME }}
+      EVS_PASSWD: ${{ secrets.EVS_ACCOUNT_PASSWORD }}
     steps:
       - uses: actions/checkout@v4
 
@@ -17,9 +20,26 @@ jobs:
         with:
           node-version: 22
 
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
       - run: npm ci
 
+      # The castLabs Widevine-enabled Electron fork has no postinstall hook (unlike
+      # vanilla electron), so the binary needs an explicit download step.
+      - name: Download Electron (castLabs Widevine build)
+        run: node node_modules/electron/install.js
+
       - run: npm run typecheck
+
+      # Caches an EVS session token on this runner so scripts/vmp-sign.js (an
+      # electron-builder afterPack hook) can sign the packaged app without
+      # re-authenticating itself.
+      - name: Authenticate with castLabs EVS
+        run: |
+          pip install --upgrade castlabs-evs
+          python -m castlabs_evs.account reauth --no-ask
 
       - name: Build and publish to GitHub Releases
         run: npx electron-vite build && npx electron-builder --publish always

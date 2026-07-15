@@ -5,6 +5,14 @@ directories:
 files:
   - out/**/*
   - package.json
+# Use the already-downloaded castLabs Widevine-enabled Electron build instead of
+# letting electron-builder fetch its own copy — keeps the packaged app on the exact
+# binary that's been VMP-signed (see scripts/vmp-sign.js).
+electronDist: node_modules/electron/dist
+# afterSign (not afterPack) so VMP-signing runs after any code-signing, per castLabs'
+# Windows ordering requirement — this project has no code-signing cert configured yet,
+# but this keeps the ordering correct if one's added later without having to remember.
+afterSign: scripts/vmp-sign.js
 win:
   target:
     - target: nsis
