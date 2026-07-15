@@ -54,6 +54,15 @@ class MpvController extends EventEmitter {
         '--idle=once',
         '--ontop',
         '--no-terminal',
+        // mpv defaults to software decoding unless told otherwise, unlike VLC which
+        // auto-negotiates hardware decode — without this, higher-bitrate files can
+        // out-pace the CPU and skip/judder even though the same file is smooth in VLC.
+        // On hardware where hwaccel init fails (e.g. some Intel iGPU driver builds —
+        // confirmed via verbose mpv logs, not just theory) it silently falls back to
+        // software decode, so also drop to cheaper scaling/dithering (mpv's own "fast"
+        // profile) to keep per-frame GPU cost down and avoid judder either way.
+        '--hwdec=auto',
+        '--profile=fast',
         `--input-ipc-server=${PIPE}`,
         path
       ],
