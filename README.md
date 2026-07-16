@@ -9,7 +9,7 @@ media — all navigable by remote, gamepad, keyboard, mouse, or your phone.
 
 ## Stack
 
-- **Electron** (main + preload) — window/kiosk, app launching, filesystem scan, Sonarr/Radarr proxy, mpv control, phone-remote server
+- **[castLabs' Widevine-enabled Electron fork](https://github.com/castlabs/electron-releases)** (main + preload) — window/kiosk, app launching, filesystem scan, Sonarr/Radarr proxy, mpv control, phone-remote server. Not vanilla Electron — see **DRM playback (Netflix/Prime/Disney+)** below.
 - **React + TypeScript + Vite** (renderer) — the 10-foot UI
 - **[electron-vite](https://electron-vite.org/)** — build/dev tooling
 - **[norigin-spatial-navigation](https://github.com/NoriginMedia/Norigin-Spatial-Navigation)** — D-pad/arrow focus movement
@@ -26,8 +26,15 @@ media — all navigable by remote, gamepad, keyboard, mouse, or your phone.
 
 ```bash
 npm install
+node node_modules/electron/install.js   # see note below — required, `npm install` alone isn't enough
 npm run dev      # launches Electron with HMR
 ```
+
+> **Note:** this project depends on [castLabs' Widevine-enabled Electron fork](https://github.com/castlabs/electron-releases),
+> not vanilla `electron` — that's what makes embedded Netflix/Prime/Disney+ playback possible
+> (see below). Unlike vanilla Electron, this fork's npm package has **no `postinstall` hook**,
+> so `npm install` alone won't download the actual binary — you must run
+> `node node_modules/electron/install.js` yourself afterward, every time you reinstall.
 
 Build / package:
 
@@ -98,6 +105,7 @@ src/
       library.ts         # shared-drive scanner (Films/TV, season/episode grouping)
       mpv.ts             # mpv launch + JSON-IPC control
       apps.ts            # launch exe / UWP / URL
+      embed.ts           # embedded DRM player (Netflix/Prime/Disney+) inside Hearth's own window
       system.ts          # mpv detection + winget install
       remote-server.ts   # express + ws phone remote
       remote-page.ts     # the phone remote's HTML
@@ -109,12 +117,67 @@ src/
     screens/             # Home, Apps, Library, Discover, Settings
 ```
 
+## DRM playback (Netflix/Prime/Disney+)
+
+Netflix, Prime Video, and Disney+ tiles use an `embed` app kind (see
+`src/main/services/embed.ts`) that loads the service directly inside Hearth's own
+window, instead of launching a separate native app or browser — which is what gets
+you a genuinely title-bar-free player. This only works because of the castLabs
+Electron fork mentioned above, which bundles Widevine CDM support that vanilla
+Electron doesn't have.
+
+**Getting a build that actually plays DRM content requires one extra step: VMP
+signing.** Without it, the embed loads fine (you can browse, log in) but playback
+fails with a license error (Netflix: `E100`). To fix that:
+
+1. Create a free castLabs EVS account (entirely CLI-driven, no website form):
+   ```bash
+   pip install castlabs-evs
+   python -m castlabs_evs.account signup
+   ```
+2. Sign the built app:
+   ```bash
+   python -m castlabs_evs.account reauth
+   python -m castlabs_evs.vmp sign-pkg node_modules/electron/dist
+   ```
+   (For a full `npm run dist` / electron-builder package instead, sign
+   `release/win-unpacked` after building — see `scripts/vmp-sign.js`, which does
+   this automatically as an electron-builder `afterSign` hook.)
+
+**Licensing note:** castLabs' free EVS tier is intended for personal/development use.
+If you're building this for wider distribution, check castLabs' current terms for
+your use case — the CDM itself isn't checked into this repo (each build downloads
+and signs its own copy), but redistributing a signed build to other people is a
+different situation than using one yourself.
+
+**Don't want to deal with any of this?** The `AppShortcut.kind` system also
+supports `'uwp'` (launch a real installed Store app) and `'webapp'` (Edge chromeless
+`--app` mode) — both work with vanilla Electron, no Widevine fork or signing needed,
+just with a visible title bar. Change the relevant tiles' `kind` in
+`src/main/config.ts`'s `DEFAULT_APPS` (or edit an existing config's `apps` array) back
+to `'uwp'`/`'webapp'` to opt out entirely.
+
 ## Releases & auto-update
 
 Pushing a tag matching `v*.*.*` (e.g. `v0.2.0`) triggers
 [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds the NSIS
-installer on a `windows-latest` runner and publishes it to
-[GitHub Releases](https://github.com/Tall-Paul/hearth/releases) via `electron-builder --publish always`.
+installer on a `windows-latest` runner, VMP-signs it (see **DRM playback** above) and
+publishes it to [GitHub Releases](https://github.com/Tall-Paul/hearth/releases) via
+`electron-builder --publish always`.
+
+This requires two repo secrets to be set (Settings → Secrets and variables → Actions)
+for the VMP-signing step to work — without them, the release build will fail at the
+"Authenticate with castLabs EVS" step:
+
+- `EVS_ACCOUNT_NAME` — the account name (not email) from `castlabs_evs.account signup`
+- `EVS_ACCOUNT_PASSWORD` — its password
+
+Set them from your own terminal, not by pasting into anything else, so the values never
+end up in shell history you don't control:
+```bash
+gh secret set EVS_ACCOUNT_NAME --repo <owner>/hearth
+gh secret set EVS_ACCOUNT_PASSWORD --repo <owner>/hearth
+```
 
 The running app checks that same Releases feed on startup and every 4 hours
 (`electron-updater`, wired in `src/main/index.ts`), downloads newer versions in the
@@ -134,3 +197,9 @@ Bump the `version` in `package.json` to match before tagging.
 - "Continue watching" with resume positions
 - Per-app kiosk browser (Edge `--kiosk`) instead of default browser for streaming
 - Optional pairing/PIN on the phone remote
+
+## License
+
+[PolyForm Noncommercial 1.0.0](LICENSE) — free to use, modify, and share for any
+noncommercial purpose (personal use, hobby projects, etc.); commercial use isn't
+permitted under this license.

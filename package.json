@@ -4,7 +4,7 @@
   "description": "A 10-foot TV / big-screen media & launcher interface for Windows",
   "main": "./out/main/index.js",
   "author": "",
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/Tall-Paul/hearth.git"
