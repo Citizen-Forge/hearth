@@ -1,6 +1,6 @@
 {
   "name": "hearth",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "A 10-foot TV / big-screen media & launcher interface for Windows",
   "main": "./out/main/index.js",
   "author": "",
