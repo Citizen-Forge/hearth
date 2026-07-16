@@ -25,6 +25,6 @@ nsis:
   createStartMenuShortcut: true
 publish:
   provider: github
-  owner: Tall-Paul
+  owner: Citizen-Forge
   repo: hearth
   releaseType: release

@@ -162,7 +162,7 @@ to `'uwp'`/`'webapp'` to opt out entirely.
 Pushing a tag matching `v*.*.*` (e.g. `v0.2.0`) triggers
 [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds the NSIS
 installer on a `windows-latest` runner, VMP-signs it (see **DRM playback** above) and
-publishes it to [GitHub Releases](https://github.com/Tall-Paul/hearth/releases) via
+publishes it to [GitHub Releases](https://github.com/Citizen-Forge/hearth/releases) via
 `electron-builder --publish always`.
 
 This requires two repo secrets to be set (Settings → Secrets and variables → Actions)
