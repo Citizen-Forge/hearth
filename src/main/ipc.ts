@@ -16,7 +16,8 @@ import { openEmbeddedPlayer, closeEmbeddedPlayer } from './services/embed'
 import { startRemoteServer, remoteUrl } from './services/remote-server'
 import { checkMpv, installMpv } from './services/system'
 import { getUpdateStatus, checkForUpdates, installUpdate } from './services/updater'
-import type { MpvStatus, InstallResult, UpdateStatus } from '../shared/types'
+import { listInstalledApps } from './services/installed-apps'
+import type { MpvStatus, InstallResult, UpdateStatus, InstalledApp } from '../shared/types'
 
 function ok<T>(data: T): ApiResult<T> {
   return { ok: true, data }
@@ -124,6 +125,16 @@ export function registerIpc(win: BrowserWindow): void {
   })
 
   ipcMain.handle('embed:close', (): void => closeEmbeddedPlayer(win))
+
+  ipcMain.handle('apps:listInstalled', async (): Promise<ApiResult<InstalledApp[]>> => {
+    try {
+      const known = new Set(loadConfig().apps.map((a) => a.target))
+      const all = await listInstalledApps()
+      return ok(all.filter((a) => !known.has(a.aumid)))
+    } catch (err) {
+      return fail(err)
+    }
+  })
 
   // ---- Playback (mpv) ----
   ipcMain.handle('play:file', async (_e, path: string, title?: string): Promise<ApiResult<null>> => {

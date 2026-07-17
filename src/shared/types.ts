@@ -147,6 +147,15 @@ export interface ApiResult<T> {
   error?: string
 }
 
+/** A launchable app detected on the host (Start Menu / AppsFolder) not already a tile. */
+export interface InstalledApp {
+  name: string
+  /** AppUserModelID — launched the same way as any 'uwp'-kind tile. */
+  aumid: string
+  /** data: URL (PNG) extracted from the app's own shell icon, if extraction succeeded. */
+  icon?: string
+}
+
 export interface UpdateStatus {
   currentVersion: string
   checking: boolean

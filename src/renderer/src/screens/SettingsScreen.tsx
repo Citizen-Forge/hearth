@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Focusable } from '../components/Focusable'
-import type { AppShortcut, HearthConfig, MediaFolder, MpvStatus, UpdateStatus } from '../types'
+import { IconGlyph } from '../components/IconGlyph'
+import type { AppShortcut, HearthConfig, InstalledApp, MediaFolder, MpvStatus, UpdateStatus } from '../types'
 
 interface Props {
   config: HearthConfig
@@ -37,6 +38,8 @@ export function SettingsScreen({ config, onSaved, showToast }: Props) {
   const [mpv, setMpv] = useState<MpvStatus | null>(null)
   const [mpvBusy, setMpvBusy] = useState(false)
   const [update, setUpdate] = useState<UpdateStatus | null>(null)
+  const [installedApps, setInstalledApps] = useState<InstalledApp[]>([])
+  const [installedLoading, setInstalledLoading] = useState(false)
 
   const refreshMpv = async (): Promise<MpvStatus> => {
     const status = await window.api.checkMpv()
@@ -45,11 +48,19 @@ export function SettingsScreen({ config, onSaved, showToast }: Props) {
     return status
   }
 
+  const refreshInstalledApps = async (): Promise<void> => {
+    setInstalledLoading(true)
+    const res = await window.api.listInstalledApps()
+    setInstalledLoading(false)
+    if (res.ok && res.data) setInstalledApps(res.data)
+  }
+
   useEffect(() => {
     void window.api.getRemoteUrl().then(setRemoteUrl)
     void window.api.getConfigPath().then(setConfigPath)
     void refreshMpv()
     void window.api.getUpdateStatus().then(setUpdate)
+    void refreshInstalledApps()
     return window.api.onUpdateStatus(setUpdate)
   }, [])
 
@@ -92,6 +103,28 @@ export function SettingsScreen({ config, onSaved, showToast }: Props) {
 
   const toggleApp = (id: string): void =>
     setApps((prev) => prev.map((a) => (a.id === id ? { ...a, enabled: a.enabled === false } : a)))
+
+  const addInstalledApp = (installed: InstalledApp): void => {
+    setApps((prev) => [
+      ...prev,
+      {
+        id: `installed-${installed.aumid}`,
+        name: installed.name,
+        icon: installed.icon,
+        kind: 'uwp',
+        target: installed.aumid,
+        enabled: true
+      }
+    ])
+    setInstalledApps((prev) => prev.filter((a) => a.aumid !== installed.aumid))
+  }
+  const removeCustomApp = (id: string): void => {
+    const removed = apps.find((a) => a.id === id)
+    setApps((prev) => prev.filter((a) => a.id !== id))
+    if (removed) {
+      setInstalledApps((prev) => [...prev, { name: removed.name, aumid: removed.target, icon: removed.icon }])
+    }
+  }
 
   const addFolder = (): void => {
     const path = newFolderPath.trim()
@@ -259,15 +292,47 @@ export function SettingsScreen({ config, onSaved, showToast }: Props) {
           <div className="tile-list">
             {apps.map((app) => {
               const on = app.enabled !== false
+              const isCustom = app.id.startsWith('installed-')
               return (
-                <Focusable key={app.id} className="tile-row" onEnter={() => toggleApp(app.id)}>
-                  <span className={`check ${on ? 'on' : ''}`}>{on ? '✓' : ''}</span>
-                  <span className="tile-row-icon">{app.icon ?? '📦'}</span>
-                  <span className="tile-row-name">{app.name}</span>
+                <div key={app.id} className="tile-row" style={{ cursor: 'default' }}>
+                  <span className="tile-row-icon"><IconGlyph icon={app.icon} /></span>
+                  <span className="tile-row-name" style={{ flex: 1 }}>{app.name}</span>
                   <span className="tile-row-kind">{KIND_LABEL[app.kind] ?? app.kind}</span>
-                </Focusable>
+                  <Focusable className="btn" onEnter={() => toggleApp(app.id)}>
+                    <span className={`check ${on ? 'on' : ''}`}>{on ? '✓' : ''}</span> {on ? 'On' : 'Off'}
+                  </Focusable>
+                  {isCustom && (
+                    <Focusable className="btn" onEnter={() => removeCustomApp(app.id)}>
+                      ✕ Remove
+                    </Focusable>
+                  )}
+                </div>
               )
             })}
+          </div>
+        </div>
+
+        {/* ---- other installed apps ---- */}
+        <div className="field">
+          <label>Other installed apps — check any you'd like as Home/Apps tiles</label>
+          <div className="tile-list" style={{ maxHeight: 320, overflowY: 'auto' }}>
+            {installedApps.map((ia) => (
+              <Focusable key={ia.aumid} className="tile-row" onEnter={() => addInstalledApp(ia)}>
+                <span className="check" />
+                <span className="tile-row-icon"><IconGlyph icon={ia.icon} /></span>
+                <span className="tile-row-name">{ia.name}</span>
+              </Focusable>
+            ))}
+            {installedApps.length === 0 && !installedLoading && (
+              <div className="hint" style={{ textAlign: 'left', margin: '4px 0' }}>
+                No other installed apps found (or they're all already tiles).
+              </div>
+            )}
+          </div>
+          <div className="row2" style={{ marginTop: 12 }}>
+            <Focusable className="btn" onEnter={() => void refreshInstalledApps()}>
+              {installedLoading ? '⏳ Scanning…' : '↻ Rescan installed apps'}
+            </Focusable>
           </div>
         </div>
 

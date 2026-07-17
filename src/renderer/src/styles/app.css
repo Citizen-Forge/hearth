@@ -152,6 +152,7 @@
   position: relative; overflow: hidden;
 }
 .app-tile .app-icon { font-size: 44px; }
+.app-tile .app-icon img { width: 44px; height: 44px; object-fit: contain; border-radius: 8px; }
 .app-tile .app-name { font-size: 20px; font-weight: 650; }
 .app-tile .glow {
   position: absolute; inset: 0; opacity: 0.22;

@@ -1,4 +1,5 @@
 import { Focusable } from './Focusable'
+import { IconGlyph } from './IconGlyph'
 import type { AppShortcut } from '../types'
 
 interface Props {
@@ -14,7 +15,9 @@ export function AppTile({ app, onLaunch }: Props) {
       onEnter={() => onLaunch(app)}
     >
       <div className="glow" />
-      <div className="app-icon">{app.icon ?? '📦'}</div>
+      <div className="app-icon">
+        <IconGlyph icon={app.icon} size={44} />
+      </div>
       <div className="app-name">{app.name}</div>
     </Focusable>
   )

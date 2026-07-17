@@ -9,7 +9,8 @@ import type {
   RemoteCommand,
   MpvStatus,
   InstallResult,
-  UpdateStatus
+  UpdateStatus,
+  InstalledApp
 } from '../shared/types'
 
 const api = {
@@ -33,6 +34,7 @@ const api = {
   // Apps
   launchApp: (app: AppShortcut): Promise<ApiResult<null>> => ipcRenderer.invoke('apps:launch', app),
   closeEmbed: (): Promise<void> => ipcRenderer.invoke('embed:close'),
+  listInstalledApps: (): Promise<ApiResult<InstalledApp[]>> => ipcRenderer.invoke('apps:listInstalled'),
 
   // Playback
   playFile: (path: string, title?: string): Promise<ApiResult<null>> =>

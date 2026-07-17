@@ -16,7 +16,8 @@ export type {
   ArrConfig,
   MpvStatus,
   InstallResult,
-  UpdateStatus
+  UpdateStatus,
+  InstalledApp
 } from '../../shared/types'
 
 import type { Library, Episode } from '../../shared/types'
